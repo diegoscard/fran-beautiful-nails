@@ -48,6 +48,34 @@ function App() {
     }
   }, []);
 
+  // Effect to update browser Favicon based on company logo
+  useEffect(() => {
+    const updateFavicon = (url: string) => {
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+      link.href = url;
+    };
+
+    if (settings.logo) {
+      // Use the uploaded custom logo
+      updateFavicon(settings.logo);
+    } else {
+      // Create a default SVG favicon that matches the app theme (Indigo background with Sparkles)
+      const defaultIconSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+          <rect width="32" height="32" rx="8" fill="#4f46e5"/>
+          <path d="M16 6L13.5 13.5L6 16L13.5 18.5L16 26L18.5 18.5L26 16L18.5 13.5L16 6Z" fill="white" />
+        </svg>
+      `;
+      const encodedSvg = encodeURIComponent(defaultIconSvg);
+      updateFavicon(`data:image/svg+xml,${encodedSvg}`);
+    }
+  }, [settings.logo]);
+
   // Save records to local storage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
