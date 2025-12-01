@@ -1,9 +1,12 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Trash2, Save, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Trash2, Save, Image as ImageIcon, MessageCircle, Download, RefreshCw, AlertTriangle } from 'lucide-react';
+import { ServiceRecord, ExpenseRecord } from '../types';
 
 export interface AppSettings {
   companyName: string;
   logo: string | null;
+  whatsappMessageTemplate?: string;
 }
 
 interface SettingsModalProps {
@@ -16,12 +19,19 @@ interface SettingsModalProps {
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, currentSettings }) => {
   const [companyName, setCompanyName] = useState(currentSettings.companyName);
   const [logo, setLogo] = useState<string | null>(currentSettings.logo);
+  const [whatsappMessageTemplate, setWhatsappMessageTemplate] = useState(
+    currentSettings.whatsappMessageTemplate || 'Olá {nome}! Passando para confirmar nosso agendamento amanhã às {horario}. Tudo certo?'
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const backupInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setCompanyName(currentSettings.companyName);
       setLogo(currentSettings.logo);
+      setWhatsappMessageTemplate(
+        currentSettings.whatsappMessageTemplate || 'Olá {nome}! Passando para confirmar nosso agendamento amanhã às {horario}. Tudo certo?'
+      );
     }
   }, [isOpen, currentSettings]);
 
@@ -40,12 +50,73 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ companyName, logo });
+    onSave({ companyName, logo, whatsappMessageTemplate });
+  };
+
+  // --- Lógica de Backup ---
+
+  const handleExportData = () => {
+    try {
+        const records = localStorage.getItem('niel_design_records_v1');
+        const expenses = localStorage.getItem('niel_design_expenses_v1');
+        const settings = localStorage.getItem('niel_design_settings_v1');
+
+        const backupData = {
+            records: records ? JSON.parse(records) : [],
+            expenses: expenses ? JSON.parse(expenses) : [],
+            settings: settings ? JSON.parse(settings) : {},
+            backupDate: new Date().toISOString(),
+            version: '1.0'
+        };
+
+        const dataStr = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `backup-${companyName.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        alert('Erro ao criar backup: ' + error);
+    }
+  };
+
+  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (!window.confirm('ATENÇÃO: Isso irá substituir TODOS os dados atuais pelos dados do backup. Deseja continuar?')) {
+          if (backupInputRef.current) backupInputRef.current.value = '';
+          return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+          try {
+              const content = event.target?.result as string;
+              const parsedData = JSON.parse(content);
+
+              if (parsedData.records) localStorage.setItem('niel_design_records_v1', JSON.stringify(parsedData.records));
+              if (parsedData.expenses) localStorage.setItem('niel_design_expenses_v1', JSON.stringify(parsedData.expenses));
+              if (parsedData.settings) localStorage.setItem('niel_design_settings_v1', JSON.stringify(parsedData.settings));
+
+              alert('Dados restaurados com sucesso! A página será recarregada.');
+              window.location.reload();
+          } catch (error) {
+              alert('Erro ao ler arquivo de backup. Verifique se é um arquivo válido.');
+              console.error(error);
+          }
+      };
+      reader.readAsText(file);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 m-4 animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 m-4 animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-slate-800">Personalizar Sistema</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
@@ -105,6 +176,65 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
               className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
               placeholder="Ex: Espaço Fran"
             />
+          </div>
+
+          {/* WhatsApp Message Template Section */}
+          <div className="space-y-2 border-t border-slate-100 pt-4">
+            <div className="flex items-center gap-2 mb-1">
+              <MessageCircle className="w-4 h-4 text-emerald-500" />
+              <label className="text-sm font-medium text-slate-700 block">Mensagem de Lembrete (WhatsApp)</label>
+            </div>
+            <textarea
+              rows={3}
+              value={whatsappMessageTemplate}
+              onChange={(e) => setWhatsappMessageTemplate(e.target.value)}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none text-sm"
+              placeholder="Digite a mensagem padrão..."
+            />
+            <p className="text-xs text-slate-500">
+              Use <strong>{'{nome}'}</strong> para o nome do cliente e <strong>{'{horario}'}</strong> para a hora do agendamento.
+            </p>
+          </div>
+
+          {/* Backup Section */}
+          <div className="space-y-3 border-t border-slate-100 pt-4">
+            <div className="flex items-center gap-2 mb-1">
+              <RefreshCw className="w-4 h-4 text-amber-500" />
+              <label className="text-sm font-medium text-slate-700 block">Dados e Backup</label>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+                <button
+                    type="button"
+                    onClick={handleExportData}
+                    className="flex flex-col items-center justify-center p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors group"
+                >
+                    <Download className="w-5 h-5 text-slate-500 group-hover:text-indigo-600 mb-1" />
+                    <span className="text-xs font-medium text-slate-600">Baixar Backup</span>
+                </button>
+                
+                <div className="relative">
+                    <button
+                        type="button"
+                        onClick={() => backupInputRef.current?.click()}
+                        className="w-full h-full flex flex-col items-center justify-center p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors group"
+                    >
+                        <Upload className="w-5 h-5 text-slate-500 group-hover:text-amber-600 mb-1" />
+                        <span className="text-xs font-medium text-slate-600">Restaurar Dados</span>
+                    </button>
+                    <input 
+                        type="file"
+                        ref={backupInputRef}
+                        onChange={handleImportData}
+                        accept=".json"
+                        className="hidden"
+                    />
+                </div>
+            </div>
+            <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Faça backups regulares para não perder seus dados.
+            </p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">

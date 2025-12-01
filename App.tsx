@@ -1,23 +1,29 @@
+
 import React, { useState, useEffect } from 'react';
-import { ServiceRecord } from './types';
+import { ServiceRecord, ExpenseRecord } from './types';
 import ServiceForm from './components/ServiceForm';
 import ServiceList from './components/ServiceList';
 import Dashboard from './components/Dashboard';
 import Agenda from './components/Agenda';
+import CashFlow from './components/CashFlow';
 import SettingsModal, { AppSettings } from './components/SettingsModal';
-import { LayoutDashboard, Plus, List, Sparkles, Calendar, Settings } from 'lucide-react';
+import { LayoutDashboard, Plus, List, Sparkles, Calendar, Settings, ArrowRightLeft } from 'lucide-react';
 
 const STORAGE_KEY = 'niel_design_records_v1';
 const SETTINGS_KEY = 'niel_design_settings_v1';
+const EXPENSES_KEY = 'niel_design_expenses_v1';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  companyName: 'Niel Design',
-  logo: null
+  companyName: 'Beautiful Nails',
+  logo: null,
+  whatsappMessageTemplate: 'Olá {nome}! Passando para confirmar nosso agendamento amanhã às {horario}. Tudo certo?'
 };
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'add' | 'agenda'>('agenda');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'add' | 'agenda' | 'cashflow'>('agenda');
   const [records, setRecords] = useState<ServiceRecord[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
+  
   // State for settings
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -38,10 +44,21 @@ function App() {
       }
     }
 
+    const savedExpenses = localStorage.getItem(EXPENSES_KEY);
+    if (savedExpenses) {
+      try {
+        setExpenses(JSON.parse(savedExpenses));
+      } catch (e) {
+        console.error("Failed to load expenses", e);
+      }
+    }
+
     const savedSettings = localStorage.getItem(SETTINGS_KEY);
     if (savedSettings) {
       try {
-        setSettings(JSON.parse(savedSettings));
+        const parsedSettings = JSON.parse(savedSettings);
+        // Ensure new fields are present if they were added after initial save
+        setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
       } catch (e) {
         console.error("Failed to load settings", e);
       }
@@ -80,6 +97,11 @@ function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
   }, [records]);
+
+  // Save expenses to local storage
+  useEffect(() => {
+    localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
+  }, [expenses]);
 
   const handleSaveSettings = (newSettings: AppSettings) => {
     try {
@@ -125,6 +147,19 @@ function App() {
         }
     }
     setIsSchedulingMode(false);
+  };
+
+  const handleAddExpense = (expenseData: Omit<ExpenseRecord, 'id' | 'createdAt'>) => {
+    const newExpense: ExpenseRecord = {
+      ...expenseData,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString()
+    };
+    setExpenses(prev => [newExpense, ...prev]);
+  };
+
+  const handleDeleteExpense = (id: string) => {
+    setExpenses(prev => prev.filter(e => e.id !== id));
   };
 
   const startFinishing = (record: ServiceRecord) => {
@@ -176,6 +211,7 @@ function App() {
     if (activeTab === 'agenda') return 'Agenda de Serviços';
     if (activeTab === 'dashboard') return 'Visão Geral';
     if (activeTab === 'list') return 'Histórico Completo';
+    if (activeTab === 'cashflow') return 'Fluxo de Caixa';
     if (activeTab === 'add') {
       if (finishingRecord) {
         if (isSchedulingMode) return 'Editar Agendamento';
@@ -255,6 +291,18 @@ function App() {
           </button>
 
           <button
+            onClick={() => setActiveTab('cashflow')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+              activeTab === 'cashflow' 
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50 font-medium' 
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <ArrowRightLeft className="w-5 h-5" />
+            Fluxo de Caixa
+          </button>
+
+          <button
             onClick={() => setActiveTab('dashboard')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
               activeTab === 'dashboard' 
@@ -268,7 +316,7 @@ function App() {
         </nav>
 
         <div className="p-4 border-t border-slate-800 text-center">
-          <p className="text-xs text-slate-500">v1.1.0 &copy; 2024</p>
+          <p className="text-xs text-slate-500">Scard System v1.0.0 &copy; 2025</p>
         </div>
       </aside>
 
@@ -282,6 +330,7 @@ function App() {
               {activeTab === 'agenda' && 'Gerencie seus próximos atendimentos e compromissos.'}
               {activeTab === 'dashboard' && 'Acompanhe seus resultados financeiros e metas.'}
               {activeTab === 'list' && 'Lista de todos os serviços já realizados.'}
+              {activeTab === 'cashflow' && 'Controle de entradas, saídas e despesas.'}
               {activeTab === 'add' && 'Preencha os dados do serviço.'}
             </p>
           </header>
@@ -302,6 +351,15 @@ function App() {
                     onNew={startNewSchedule} 
                     onEdit={startEditingSchedule}
                     onDelete={handleDeleteRecord}
+                    whatsappMessageTemplate={settings.whatsappMessageTemplate || DEFAULT_SETTINGS.whatsappMessageTemplate}
+                />
+            )}
+            {activeTab === 'cashflow' && (
+                <CashFlow 
+                  serviceRecords={records}
+                  expenseRecords={expenses}
+                  onAddExpense={handleAddExpense}
+                  onDeleteExpense={handleDeleteExpense}
                 />
             )}
             {activeTab === 'add' && (

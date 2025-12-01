@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ServiceRecord } from '../types';
 import { formatDate } from '../utils/formatters';
-import { Calendar, Phone, Clock, CheckCircle, Plus, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Calendar, Phone, Clock, CheckCircle, Plus, Pencil, Trash2, Check, X, MessageCircle } from 'lucide-react';
 
 interface AgendaProps {
   records: ServiceRecord[];
@@ -10,6 +10,7 @@ interface AgendaProps {
   onNew: () => void;
   onEdit: (record: ServiceRecord) => void;
   onDelete: (record: ServiceRecord) => void;
+  whatsappMessageTemplate: string | undefined;
 }
 
 const AgendaCard: React.FC<{
@@ -17,7 +18,8 @@ const AgendaCard: React.FC<{
   onFinish: (record: ServiceRecord) => void;
   onEdit: (record: ServiceRecord) => void;
   onDelete: (record: ServiceRecord) => void;
-}> = ({ record, onFinish, onEdit, onDelete }) => {
+  whatsappMessageTemplate: string | undefined;
+}> = ({ record, onFinish, onEdit, onDelete, whatsappMessageTemplate }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isToday = (dateString: string) => {
@@ -30,7 +32,43 @@ const AgendaCard: React.FC<{
     );
   };
 
+  const isOneDayBefore = (dateString: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const [year, month, day] = dateString.split('-').map(Number);
+    const serviceDate = new Date(year, month - 1, day);
+    
+    // Diferença em milissegundos
+    const diffTime = serviceDate.getTime() - today.getTime();
+    // Converter para dias
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays === 1;
+  };
+
+  const handleWhatsAppReminder = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!record.clientPhone) return;
+
+    const cleanPhone = record.clientPhone.replace(/\D/g, '');
+    
+    const template = whatsappMessageTemplate || 'Olá {nome}! Passando para confirmar nosso agendamento amanhã às {horario}. Tudo certo?';
+    
+    const message = template
+        .replace(/{nome}/g, record.clientName)
+        .replace(/{horario}/g, record.serviceTime || '');
+    
+    // Assumindo DDI 55 (Brasil) se não houver
+    const phoneWithDDI = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone;
+    
+    const url = `https://wa.me/${phoneWithDDI}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
   const isEventToday = isToday(record.serviceDate);
+  const showReminder = isOneDayBefore(record.serviceDate) && record.clientPhone;
 
   return (
     <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative overflow-hidden group">
@@ -47,9 +85,20 @@ const AgendaCard: React.FC<{
         </div>
         
         <div className="flex items-center gap-2">
-            <div className="text-xs text-slate-400">
-                ID: {record.id.slice(0, 4)}
-            </div>
+            {/* Lembrete WhatsApp - Aparece 1 dia antes */}
+            {showReminder && !isDeleting && (
+                <button 
+                    onClick={handleWhatsAppReminder}
+                    className="relative flex items-center justify-center p-2 mr-2 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 group/btn"
+                    title="Enviar lembrete no WhatsApp"
+                >
+                    {/* Efeito de Ping (Radar) para chamar atenção */}
+                    <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
+                    
+                    <MessageCircle className="w-4 h-4 relative z-10 fill-current" />
+                </button>
+            )}
+
             <div className="flex items-center gap-1 h-7">
                 {!isDeleting ? (
                     <>
@@ -137,7 +186,7 @@ const AgendaCard: React.FC<{
   );
 };
 
-const Agenda: React.FC<AgendaProps> = ({ records, onFinish, onNew, onEdit, onDelete }) => {
+const Agenda: React.FC<AgendaProps> = ({ records, onFinish, onNew, onEdit, onDelete, whatsappMessageTemplate }) => {
   // Filter for only scheduled items and sort by date (nearest first)
   const scheduledRecords = records
     .filter(r => r.status === 'agendado')
@@ -171,7 +220,8 @@ const Agenda: React.FC<AgendaProps> = ({ records, onFinish, onNew, onEdit, onDel
               record={record} 
               onFinish={onFinish} 
               onEdit={onEdit} 
-              onDelete={onDelete} 
+              onDelete={onDelete}
+              whatsappMessageTemplate={whatsappMessageTemplate}
             />
           ))
         ) : (

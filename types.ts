@@ -20,6 +20,16 @@ export interface ServiceRecord {
   createdAt: string;
 }
 
+export interface ExpenseRecord {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  type: 'expense' | 'income'; // 'expense' para gastos, 'income' para entradas extras
+  category?: string;
+  createdAt: string;
+}
+
 export interface MonthlyStats {
   month: string; // YYYY-MM
   total: number;
