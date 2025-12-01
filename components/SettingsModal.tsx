@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Trash2, Save, Image as ImageIcon, MessageCircle, Download, RefreshCw, AlertTriangle } from 'lucide-react';
+import { X, Upload, Trash2, Save, Image as ImageIcon, MessageCircle, Download, RefreshCw, AlertTriangle, Moon, Sun } from 'lucide-react';
 import { ServiceRecord, ExpenseRecord } from '../types';
 
 export interface AppSettings {
   companyName: string;
   logo: string | null;
   whatsappMessageTemplate?: string;
+  theme?: 'light' | 'dark';
 }
 
 interface SettingsModalProps {
@@ -22,6 +23,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
   const [whatsappMessageTemplate, setWhatsappMessageTemplate] = useState(
     currentSettings.whatsappMessageTemplate || 'Olá {nome}! Passando para confirmar nosso agendamento amanhã às {horario}. Tudo certo?'
   );
+  const [theme, setTheme] = useState<'light' | 'dark'>(currentSettings.theme || 'light');
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
 
@@ -32,6 +35,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
       setWhatsappMessageTemplate(
         currentSettings.whatsappMessageTemplate || 'Olá {nome}! Passando para confirmar nosso agendamento amanhã às {horario}. Tudo certo?'
       );
+      setTheme(currentSettings.theme || 'light');
     }
   }, [isOpen, currentSettings]);
 
@@ -50,7 +54,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ companyName, logo, whatsappMessageTemplate });
+    onSave({ companyName, logo, whatsappMessageTemplate, theme });
   };
 
   // --- Lógica de Backup ---
@@ -176,6 +180,37 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
               className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
               placeholder="Ex: Espaço Fran"
             />
+          </div>
+
+          {/* Theme Section */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 block">Aparência</label>
+            <div className="flex gap-4">
+                <button
+                    type="button"
+                    onClick={() => setTheme('light')}
+                    className={`flex-1 py-2 px-4 rounded-lg border flex items-center justify-center gap-2 transition-all ${
+                        theme === 'light'
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700 ring-1 ring-indigo-500'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                >
+                    <Sun className="w-4 h-4" />
+                    Claro
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setTheme('dark')}
+                    className={`flex-1 py-2 px-4 rounded-lg border flex items-center justify-center gap-2 transition-all ${
+                        theme === 'dark'
+                        ? 'bg-slate-800 border-slate-700 text-white ring-1 ring-slate-600'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                >
+                    <Moon className="w-4 h-4" />
+                    Escuro
+                </button>
+            </div>
           </div>
 
           {/* WhatsApp Message Template Section */}
