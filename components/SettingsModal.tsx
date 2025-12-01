@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Upload, Trash2, Save, Image as ImageIcon, MessageCircle, Download, RefreshCw, AlertTriangle, Moon, Sun } from 'lucide-react';
-import { AppSettings } from './SettingsModal'; // Assuming types are exported or defined here, fixing import based on context
 
 export interface AppSettings {
   companyName: string;

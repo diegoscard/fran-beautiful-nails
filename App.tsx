@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ServiceRecord, ExpenseRecord } from './types';
 import ServiceForm from './components/ServiceForm';
