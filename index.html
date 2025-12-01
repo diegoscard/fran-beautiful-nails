@@ -34,6 +34,16 @@
           font-size: 16px !important;
         }
       }
+
+      /* Reset específico para inputs de data/hora no iOS para ficarem iguais aos de texto */
+      input[type="date"],
+      input[type="time"],
+      input[type="month"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: transparent;
+        min-height: 42px; /* Garante altura mínima consistente com inputs de texto */
+      }
     </style>
 <script type="importmap">
 {

@@ -90,16 +90,16 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-slate-100">
+    <div className="max-w-2xl mx-auto bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 transition-colors">
       <div className="flex items-center gap-3 mb-6">
-        <div className={`p-2 rounded-lg ${isScheduling ? 'bg-amber-100' : 'bg-indigo-100'}`}>
+        <div className={`p-2 rounded-lg ${isScheduling ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-indigo-100 dark:bg-indigo-900/30'}`}>
           {isScheduling ? (
-             <Clock className="w-6 h-6 text-amber-600" />
+             <Clock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
           ) : (
-             <PlusCircle className="w-6 h-6 text-indigo-600" />
+             <PlusCircle className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
           )}
         </div>
-        <h2 className="text-xl font-bold text-slate-800">
+        <h2 className="text-xl font-bold text-slate-800 dark:text-white">
           {isScheduling ? 'Agendar Serviço' : 'Registrar Atendimento Realizado'}
         </h2>
       </div>
@@ -107,24 +107,24 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Nome do Cliente</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Nome do Cliente</label>
             <input
               type="text"
               required
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-slate-400 dark:placeholder-slate-500"
               placeholder="Ex: Ana Silva"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Celular</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Celular</label>
             <input
               type="tel"
               value={clientPhone}
               onChange={handlePhoneChange}
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-slate-400 dark:placeholder-slate-500"
               placeholder="(00) 00000-0000"
             />
           </div>
@@ -132,25 +132,25 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
           <div className="space-y-2 col-span-1 md:col-span-2">
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Data</label>
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Data</label>
                     <div>
                     <input
                         type="date"
                         required
                         value={serviceDate}
                         onChange={(e) => setServiceDate(e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all appearance-none"
                     />
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Horário</label>
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Horário</label>
                     <div>
                         <input
                             type="time"
                             value={serviceTime}
                             onChange={(e) => setServiceTime(e.target.value)}
-                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                            className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all appearance-none"
                         />
                     </div>
                 </div>
@@ -158,12 +158,12 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
           </div>
 
           <div className="space-y-2 col-span-1 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Data de Retorno Prevista</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Data de Retorno Prevista</label>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => adjustReturnDate(-1)}
-                className="shrink-0 p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors border border-slate-200"
+                className="shrink-0 p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 rounded-lg transition-colors border border-slate-200 dark:border-slate-600"
                 title="Diminuir 1 dia"
               >
                 <Minus className="w-5 h-5" />
@@ -174,23 +174,23 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
                   type="date"
                   value={returnDate}
                   onChange={(e) => setReturnDate(e.target.value)}
-                  className="w-full px-2 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-center font-medium text-slate-700 appearance-none"
+                  className="w-full px-2 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-center font-medium text-slate-700 dark:text-white appearance-none"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={() => adjustReturnDate(1)}
-                className="shrink-0 p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors border border-slate-200"
+                className="shrink-0 p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 rounded-lg transition-colors border border-slate-200 dark:border-slate-600"
                 title="Adicionar 1 dia"
               >
                 <Plus className="w-5 h-5" />
               </button>
             </div>
             <div className="flex justify-between items-center px-1">
-              <p className="text-xs text-slate-500">Auto: +20 dias</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Auto: +20 dias</p>
               {returnDate && (
-                <p className="text-xs font-medium text-indigo-600 capitalize">
+                <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 capitalize">
                   {getReturnDateWeekday()}
                 </p>
               )}
@@ -199,13 +199,13 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Descrição do Serviço</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Descrição do Serviço</label>
           <textarea
             required
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
+            className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none placeholder-slate-400 dark:placeholder-slate-500"
             placeholder="Descreva o que será feito..."
           />
         </div>
@@ -213,11 +213,11 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
         {!isScheduling && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Forma de Pagamento</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Forma de Pagamento</label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
               >
                 {Object.values(PaymentMethod).map((method) => (
                   <option key={method} value={method}>{method}</option>
@@ -226,7 +226,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Valor (R$)</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Valor (R$)</label>
               <input
                 type="number"
                 required={!isScheduling}
@@ -234,18 +234,18 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
                 step="0.01"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-slate-400 dark:placeholder-slate-500"
                 placeholder="0.00"
               />
             </div>
           </div>
         )}
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+            className="px-6 py-2 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
           >
             Cancelar
           </button>
@@ -253,8 +253,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
             type="submit"
             className={`flex items-center gap-2 px-6 py-2 text-white font-medium rounded-lg transition-colors shadow-md ${
                 isScheduling 
-                ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-200' 
-                : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-200 dark:shadow-none' 
+                : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 dark:shadow-none'
             }`}
           >
             {isScheduling ? <Clock className="w-4 h-4" /> : <Save className="w-4 h-4" />}

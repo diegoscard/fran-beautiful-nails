@@ -261,7 +261,7 @@ const CashFlow: React.FC<CashFlowProps> = ({ serviceRecords, expenseRecords, onA
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm min-w-0"
+                  className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm min-w-0 appearance-none"
                 />
               </div>
             </div>
