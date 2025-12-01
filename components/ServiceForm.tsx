@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { PaymentMethod, ServiceRecord } from '../types';
 import { calculateReturnDate } from '../utils/formatters';
@@ -164,25 +163,25 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onAdd, onCancel, initialData,
               <button
                 type="button"
                 onClick={() => adjustReturnDate(-1)}
-                className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors border border-slate-200"
+                className="shrink-0 p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors border border-slate-200"
                 title="Diminuir 1 dia"
               >
                 <Minus className="w-5 h-5" />
               </button>
               
-              <div className="relative flex-1">
+              <div className="relative flex-1 min-w-0">
                 <input
                   type="date"
                   value={returnDate}
                   onChange={(e) => setReturnDate(e.target.value)}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-center font-medium text-slate-700"
+                  className="w-full px-2 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-center font-medium text-slate-700 appearance-none"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={() => adjustReturnDate(1)}
-                className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors border border-slate-200"
+                className="shrink-0 p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors border border-slate-200"
                 title="Adicionar 1 dia"
               >
                 <Plus className="w-5 h-5" />
