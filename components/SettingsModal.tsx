@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Trash2, Save, Image as ImageIcon, MessageCircle, Download, RefreshCw, AlertTriangle, Moon, Sun } from 'lucide-react';
+import { X, Upload, Trash2, Save, Image as ImageIcon, MessageCircle, Download, RefreshCw, AlertTriangle, Moon, Sun, CreditCard } from 'lucide-react';
 
 export interface AppSettings {
   companyName: string;
   logo: string | null;
   whatsappMessageTemplate?: string;
   theme?: 'light' | 'dark';
+  cardRates?: {
+    debit: number;
+    credit: number;
+  };
 }
 
 interface SettingsModalProps {
@@ -22,6 +26,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
     currentSettings.whatsappMessageTemplate || 'Olá {nome}! Passando para confirmar nosso agendamento amanhã às {horario}. Tudo certo?'
   );
   const [theme, setTheme] = useState<'light' | 'dark'>(currentSettings.theme || 'light');
+  
+  // Taxas
+  const [debitRate, setDebitRate] = useState<string>(currentSettings.cardRates?.debit.toString() || '0');
+  const [creditRate, setCreditRate] = useState<string>(currentSettings.cardRates?.credit.toString() || '0');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
@@ -34,6 +42,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
         currentSettings.whatsappMessageTemplate || 'Olá {nome}! Passando para confirmar nosso agendamento amanhã às {horario}. Tudo certo?'
       );
       setTheme(currentSettings.theme || 'light');
+      setDebitRate(currentSettings.cardRates?.debit.toString() || '0');
+      setCreditRate(currentSettings.cardRates?.credit.toString() || '0');
     }
   }, [isOpen, currentSettings]);
 
@@ -61,7 +71,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ companyName, logo, whatsappMessageTemplate, theme });
+    onSave({ 
+        companyName, 
+        logo, 
+        whatsappMessageTemplate, 
+        theme,
+        cardRates: {
+            debit: parseFloat(debitRate) || 0,
+            credit: parseFloat(creditRate) || 0
+        }
+    });
   };
 
   const handleCancel = () => {
@@ -197,6 +216,51 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
               className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
               placeholder="Ex: Espaço Fran"
             />
+          </div>
+
+           {/* Taxas de Cartão */}
+           <div className="space-y-3 border-t border-slate-100 dark:border-slate-700 pt-4">
+            <div className="flex items-center gap-2 mb-1">
+              <CreditCard className="w-4 h-4 text-indigo-500" />
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block">Taxas da Maquininha (%)</label>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Débito</label>
+                    <div className="relative">
+                        <input 
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            value={debitRate}
+                            onChange={(e) => setDebitRate(e.target.value)}
+                            className="w-full pl-3 pr-8 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                            placeholder="0"
+                        />
+                        <span className="absolute right-3 top-2 text-slate-400 text-sm">%</span>
+                    </div>
+                </div>
+                <div>
+                    <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Crédito</label>
+                    <div className="relative">
+                        <input 
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            value={creditRate}
+                            onChange={(e) => setCreditRate(e.target.value)}
+                            className="w-full pl-3 pr-8 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                            placeholder="0"
+                        />
+                        <span className="absolute right-3 top-2 text-slate-400 text-sm">%</span>
+                    </div>
+                </div>
+            </div>
+            <p className="text-xs text-slate-400">
+                O valor líquido (com o desconto da taxa) será exibido automaticamente no Dashboard.
+            </p>
           </div>
 
           {/* Theme Section */}

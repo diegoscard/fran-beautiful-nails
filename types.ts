@@ -6,6 +6,18 @@ export enum PaymentMethod {
   CREDITO = 'Crédito'
 }
 
+export type UserRole = 'master' | 'admin' | 'employee';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+  isAdmin?: boolean; // Mantido para compatibilidade, mas o sistema usará 'role'
+  role?: UserRole;   // Novo campo de cargo
+  permissions?: string[]; // IDs das abas permitidas (ex: 'agenda', 'cashflow')
+}
+
 export interface ServiceRecord {
   id: string;
   clientName: string;

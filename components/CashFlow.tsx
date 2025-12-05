@@ -1,16 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { ServiceRecord, ExpenseRecord } from '../types';
+import { ServiceRecord, ExpenseRecord, PaymentMethod } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { TrendingUp, TrendingDown, Wallet, Plus, Trash2, ArrowUpCircle, ArrowDownCircle, Save, Calendar, Clock } from 'lucide-react';
+import { AppSettings } from './SettingsModal';
 
 interface CashFlowProps {
   serviceRecords: ServiceRecord[];
   expenseRecords: ExpenseRecord[];
   onAddExpense: (expense: Omit<ExpenseRecord, 'id' | 'createdAt'>) => void;
   onDeleteExpense: (id: string) => void;
+  settings?: AppSettings;
 }
 
-const CashFlow: React.FC<CashFlowProps> = ({ serviceRecords, expenseRecords, onAddExpense, onDeleteExpense }) => {
+const CashFlow: React.FC<CashFlowProps> = ({ serviceRecords, expenseRecords, onAddExpense, onDeleteExpense, settings }) => {
   // Estado do formulário
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -27,15 +29,30 @@ const CashFlow: React.FC<CashFlowProps> = ({ serviceRecords, expenseRecords, onA
     // 1. Preparar atendimentos (apenas concluídos) como entradas
     const serviceTransactions = serviceRecords
       .filter(r => r.status === 'concluido' && r.amount)
-      .map(r => ({
-        id: r.id,
-        description: `Serviço: ${r.clientName} - ${r.description}`,
-        amount: r.amount || 0,
-        date: r.serviceDate,
-        type: 'income' as const,
-        isService: true, // Flag para identificar que vem do módulo de serviços
-        originalRecord: r
-      }));
+      .map(r => {
+        let finalAmount = r.amount || 0;
+
+        // Aplicar taxas se configurado (Lógica idêntica ao Dashboard)
+        if (settings?.cardRates && r.paymentMethod) {
+            if (r.paymentMethod === PaymentMethod.DEBITO) {
+               const rate = settings.cardRates.debit || 0;
+               finalAmount = finalAmount * (1 - rate / 100);
+            } else if (r.paymentMethod === PaymentMethod.CREDITO) {
+               const rate = settings.cardRates.credit || 0;
+               finalAmount = finalAmount * (1 - rate / 100);
+            }
+        }
+
+        return {
+            id: r.id,
+            description: `Serviço: ${r.clientName} - ${r.description}`,
+            amount: finalAmount,
+            date: r.serviceDate,
+            type: 'income' as const,
+            isService: true, // Flag para identificar que vem do módulo de serviços
+            originalRecord: r
+        };
+      });
 
     // 2. Preparar despesas manuais
     const manualTransactions = expenseRecords.map(r => ({
@@ -69,7 +86,7 @@ const CashFlow: React.FC<CashFlowProps> = ({ serviceRecords, expenseRecords, onA
     const balance = income - expense;
 
     return { transactions: filtered, totals: { income, expense, balance } };
-  }, [serviceRecords, expenseRecords, filterMonth, filterDate, filterMode]);
+  }, [serviceRecords, expenseRecords, filterMonth, filterDate, filterMode, settings]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,7 +240,7 @@ const CashFlow: React.FC<CashFlowProps> = ({ serviceRecords, expenseRecords, onA
                     : 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'
                   }`}
                 >
-                  <ArrowUpCircle className="w-4 h-4" /> Entrada Extra
+                  <ArrowUpCircle className="w-4 h-4" /> Entrada
                 </button>
               </div>
             </div>
@@ -251,7 +268,7 @@ const CashFlow: React.FC<CashFlowProps> = ({ serviceRecords, expenseRecords, onA
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0,00"
-                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm placeholder-slate-400 dark:placeholder-slate-500"
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm placeholder-slate-400 dark:placeholder-slate-500 h-[42px]"
                 />
               </div>
               <div>
@@ -261,7 +278,7 @@ const CashFlow: React.FC<CashFlowProps> = ({ serviceRecords, expenseRecords, onA
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm min-w-0 appearance-none"
+                  className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm min-w-0 appearance-none h-[42px]"
                 />
               </div>
             </div>

@@ -14,15 +14,17 @@ import {
 } from 'recharts';
 import { ServiceRecord, PaymentMethod } from '../types';
 import { formatCurrency, getMonthName } from '../utils/formatters';
-import { TrendingUp, Banknote, CreditCard, Landmark } from 'lucide-react';
+import { TrendingUp, Banknote, CreditCard, Landmark, Wallet } from 'lucide-react';
+import { AppSettings } from './SettingsModal';
 
 interface DashboardProps {
   records: ServiceRecord[];
+  settings?: AppSettings;
 }
 
 const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
-const Dashboard: React.FC<DashboardProps> = ({ records }) => {
+const Dashboard: React.FC<DashboardProps> = ({ records, settings }) => {
   
   const stats = useMemo(() => {
     let totalGeneral = 0;
@@ -43,14 +45,31 @@ const Dashboard: React.FC<DashboardProps> = ({ records }) => {
         return;
       }
 
-      totalGeneral += record.amount;
+      // Cálculo do valor líquido se houver taxa
+      let liquidAmount = record.amount;
+      
+      // Aplicar taxas apenas para contabilidade do total geral e cards, se configurado
+      // Para o gráfico mensal, usamos o valor que realmente "entrou" (líquido)
+      if (settings?.cardRates) {
+          if (record.paymentMethod === PaymentMethod.DEBITO) {
+             const rate = settings.cardRates.debit || 0;
+             liquidAmount = record.amount * (1 - rate / 100);
+          } else if (record.paymentMethod === PaymentMethod.CREDITO) {
+             const rate = settings.cardRates.credit || 0;
+             liquidAmount = record.amount * (1 - rate / 100);
+          }
+      }
+
+      totalGeneral += liquidAmount;
       
       if (byMethod[record.paymentMethod] !== undefined) {
-        byMethod[record.paymentMethod] += record.amount;
+        // Acumula o valor (bruto ou líquido? Vamos usar líquido para consistência do total geral)
+        // Se o usuário quer ver quanto RECEBEU, é o líquido.
+        byMethod[record.paymentMethod] += liquidAmount;
       }
 
       const monthKey = record.serviceDate.substring(0, 7); // YYYY-MM
-      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + record.amount;
+      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + liquidAmount;
       monthlyCount[monthKey] = (monthlyCount[monthKey] || 0) + 1;
     });
 
@@ -68,58 +87,85 @@ const Dashboard: React.FC<DashboardProps> = ({ records }) => {
       }));
 
     return { totalGeneral, byMethod, pieData, barData };
-  }, [records]);
+  }, [records, settings]);
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Geral</p>
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{formatCurrency(stats.totalGeneral)}</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+        {/* Total Geral - Maior Destaque */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors sm:col-span-2 lg:col-span-2 relative overflow-hidden">
+          <div className="relative z-10">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Líquido (Recebido)</p>
+            <h3 className="text-3xl font-bold text-slate-800 dark:text-white mt-1">{formatCurrency(stats.totalGeneral)}</h3>
           </div>
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-full">
-            <TrendingUp className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          <div className="p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-full relative z-10">
+            <TrendingUp className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Pix</p>
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{formatCurrency(stats.byMethod[PaymentMethod.PIX])}</h3>
-          </div>
-          <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-full">
-            <Landmark className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+          <div className="absolute -right-6 -bottom-6 opacity-5">
+            <TrendingUp className="w-40 h-40 text-indigo-600" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Dinheiro</p>
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{formatCurrency(stats.byMethod[PaymentMethod.DINHEIRO])}</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors">
+          <div className="flex justify-between items-start mb-2">
+             <div className="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
+                <Landmark className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+             </div>
           </div>
-          <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-full">
-            <Banknote className="w-6 h-6 text-green-600 dark:text-green-400" />
+          <div>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Pix</p>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white">{formatCurrency(stats.byMethod[PaymentMethod.PIX])}</h3>
           </div>
         </div>
 
-         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Cartão (D/C)</p>
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">
-                {formatCurrency(stats.byMethod[PaymentMethod.DEBITO] + stats.byMethod[PaymentMethod.CREDITO])}
-            </h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors">
+          <div className="flex justify-between items-start mb-2">
+             <div className="p-2 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                <Banknote className="w-5 h-5 text-green-600 dark:text-green-400" />
+             </div>
           </div>
-          <div className="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-full">
-            <CreditCard className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          <div>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Dinheiro</p>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white">{formatCurrency(stats.byMethod[PaymentMethod.DINHEIRO])}</h3>
           </div>
         </div>
+
+         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors">
+            <div className="flex justify-between items-start mb-2">
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                    <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                {settings?.cardRates?.debit ? (
+                    <span className="text-[10px] bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500">-{settings.cardRates.debit}%</span>
+                ) : null}
+            </div>
+            <div>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Débito</p>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white">{formatCurrency(stats.byMethod[PaymentMethod.DEBITO])}</h3>
+            </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors">
+            <div className="flex justify-between items-start mb-2">
+                <div className="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
+                    <CreditCard className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                {settings?.cardRates?.credit ? (
+                    <span className="text-[10px] bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500">-{settings.cardRates.credit}%</span>
+                ) : null}
+            </div>
+            <div>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Crédito</p>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white">{formatCurrency(stats.byMethod[PaymentMethod.CREDITO])}</h3>
+            </div>
+        </div>
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Monthly Trend Chart */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Faturamento Mensal</h3>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Faturamento Mensal (Líquido)</h3>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.barData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
