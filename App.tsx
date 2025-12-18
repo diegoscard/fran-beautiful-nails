@@ -519,7 +519,7 @@ function App() {
             <h2 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white">{getPageTitle()}</h2>
             <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm mt-1">
               {activeTab === 'admin' && 'Gerenciamento de usuários e permissões.'}
-              {activeTab === 'agenda' && 'Gerencie seus próximos atendimentos e compromissossss.'}
+              {activeTab === 'agenda' && 'Gerencie seus próximos atendimentos e compromissos.'}
               {activeTab === 'dashboard' && 'Acompanhe seus resultados financeiros e metas.'}
               {activeTab === 'list' && 'Lista de todos os serviços já realizados.'}
               {activeTab === 'cashflow' && 'Controle de entradas, saídas e despesas.'}
