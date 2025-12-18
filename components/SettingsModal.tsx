@@ -97,25 +97,32 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 
   const handleExportData = () => {
     try {
-        const records = localStorage.getItem('niel_design_records_v1');
-        const expenses = localStorage.getItem('niel_design_expenses_v1');
-        const settings = localStorage.getItem('niel_design_settings_v1');
+        // Chaves exatas usadas no App.tsx e AdminPanel.tsx
+        const records = localStorage.getItem('niel_design_records_v1_global_store_data');
+        const expenses = localStorage.getItem('niel_design_expenses_v1_global_store_data');
+        const settings = localStorage.getItem('niel_design_settings_v1_global_store_data');
+        const users = localStorage.getItem('niel_app_users_v1');
 
         const backupData = {
             records: records ? JSON.parse(records) : [],
             expenses: expenses ? JSON.parse(expenses) : [],
             settings: settings ? JSON.parse(settings) : {},
+            users: users ? JSON.parse(users) : [],
             backupDate: new Date().toISOString(),
-            version: '1.0'
+            appName: "Niel Design System",
+            version: '2.0'
         };
 
         const dataStr = JSON.stringify(backupData, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         
+        const timestamp = new Date().toISOString().split('T')[0];
+        const fileName = `BACKUP_TOTAL_${companyName.replace(/\s+/g, '_').toUpperCase()}_${timestamp}.json`;
+        
         const link = document.createElement('a');
         link.href = url;
-        link.download = `backup-${companyName.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = fileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -129,7 +136,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
       const file = e.target.files?.[0];
       if (!file) return;
 
-      if (!window.confirm('ATENÇÃO: Isso irá substituir TODOS os dados atuais pelos dados do backup. Deseja continuar?')) {
+      if (!window.confirm('ATENÇÃO: Isso irá substituir TODOS os dados atuais (Agendamentos, Financeiro, Usuários e Configurações) pelos dados deste backup. Deseja continuar?')) {
           if (backupInputRef.current) backupInputRef.current.value = '';
           return;
       }
@@ -140,14 +147,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
               const content = event.target?.result as string;
               const parsedData = JSON.parse(content);
 
-              if (parsedData.records) localStorage.setItem('niel_design_records_v1', JSON.stringify(parsedData.records));
-              if (parsedData.expenses) localStorage.setItem('niel_design_expenses_v1', JSON.stringify(parsedData.expenses));
-              if (parsedData.settings) localStorage.setItem('niel_design_settings_v1', JSON.stringify(parsedData.settings));
+              // Validação básica do arquivo de backup
+              if (!parsedData.records && !parsedData.expenses && !parsedData.users) {
+                  throw new Error("Arquivo de backup inválido ou vazio.");
+              }
 
-              alert('Dados restaurados com sucesso! A página será recarregada.');
+              // Salva usando as chaves globais unificadas
+              if (parsedData.records) localStorage.setItem('niel_design_records_v1_global_store_data', JSON.stringify(parsedData.records));
+              if (parsedData.expenses) localStorage.setItem('niel_design_expenses_v1_global_store_data', JSON.stringify(parsedData.expenses));
+              if (parsedData.settings) localStorage.setItem('niel_design_settings_v1_global_store_data', JSON.stringify(parsedData.settings));
+              if (parsedData.users) localStorage.setItem('niel_app_users_v1', JSON.stringify(parsedData.users));
+
+              alert('SISTEMA RESTAURADO!\nTodos os dados (Agenda, Histórico, Financeiro e Usuários) foram recuperados com sucesso. A página será reiniciada.');
               window.location.reload();
           } catch (error) {
-              alert('Erro ao ler arquivo de backup. Verifique se é um arquivo válido.');
+              alert('Erro ao restaurar: O arquivo selecionado não é um backup válido do Niel Design.');
               console.error(error);
           }
       };
@@ -316,7 +330,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
           <div className="space-y-3 border-t border-slate-100 dark:border-slate-700 pt-4">
             <div className="flex items-center gap-2 mb-1">
               <RefreshCw className="w-4 h-4 text-amber-500" />
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block">Dados e Backup</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block">Backup Total do Sistema</label>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
@@ -326,7 +340,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                     className="flex flex-col items-center justify-center p-3 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group"
                 >
                     <Download className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 mb-1" />
-                    <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Baixar Backup</span>
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-300 text-center">Exportar Tudo</span>
                 </button>
                 
                 <div className="relative">
@@ -336,7 +350,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                         className="w-full h-full flex flex-col items-center justify-center p-3 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group"
                     >
                         <Upload className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 mb-1" />
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Restaurar Dados</span>
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300 text-center">Importar Tudo</span>
                     </button>
                     <input 
                         type="file"
@@ -348,8 +362,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                 </div>
             </div>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
-                Faça backups regulares para não perder seus dados.
+                <AlertTriangle className="w-3 h-3 text-amber-500" />
+                O backup inclui Agenda, Histórico, Fluxo de Caixa e Usuários.
             </p>
           </div>
 
