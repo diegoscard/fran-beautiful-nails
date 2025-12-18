@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, Search, Users, Calendar, Pencil, X, Save, KeyRound, Mail, User as UserIcon, Send, CheckSquare, Square, Briefcase } from 'lucide-react';
+import { Shield, Search, Users, Calendar, Pencil, X, Save, KeyRound, Mail, User as UserIcon, Send, CheckSquare, Square, Briefcase, Trash2, Check } from 'lucide-react';
 import { formatDate } from '../utils/formatters';
 import { User, UserRole } from '../types';
 
@@ -23,6 +23,9 @@ const AdminPanel: React.FC = () => {
     
     const [newPassword, setNewPassword] = useState('');
     const [showPasswordSection, setShowPasswordSection] = useState(false);
+
+    // Estado para confirmação de exclusão inline
+    const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null);
 
     useEffect(() => {
         loadUsers();
@@ -48,6 +51,18 @@ const AdminPanel: React.FC = () => {
         setEditPermissions(user.permissions || ['agenda']);
         setNewPassword('');
         setShowPasswordSection(false);
+        setDeleteConfirmationId(null); // Fecha confirmação de exclusão se estiver aberta
+    };
+
+    const confirmDeleteUser = (userId: string) => {
+        const storedUsersStr = localStorage.getItem('niel_app_users_v1');
+        if (storedUsersStr) {
+            const dbUsers = JSON.parse(storedUsersStr);
+            const updatedUsers = dbUsers.filter((u: any) => u.id !== userId);
+            localStorage.setItem('niel_app_users_v1', JSON.stringify(updatedUsers));
+            setUsers(updatedUsers);
+        }
+        setDeleteConfirmationId(null);
     };
 
     const togglePermission = (permId: string) => {
@@ -178,15 +193,46 @@ const AdminPanel: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                {/* Master não pode ser editado aqui para segurança básica */}
+                                                {/* Master não pode ser editado ou excluído aqui para segurança básica */}
                                                 {user.role !== 'master' && (
-                                                    <button 
-                                                        onClick={() => handleEditClick(user)}
-                                                        className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-                                                        title="Editar Usuário"
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {deleteConfirmationId === user.id ? (
+                                                            <div className="flex items-center bg-red-50 dark:bg-red-900/20 rounded-md p-1 animate-in fade-in slide-in-from-right-2 duration-200">
+                                                                <span className="text-[10px] text-red-600 dark:text-red-400 font-bold mr-2 ml-1">Excluir?</span>
+                                                                <button 
+                                                                    onClick={() => confirmDeleteUser(user.id)} 
+                                                                    className="p-1 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/40 rounded transition-colors mr-1"
+                                                                    title="Confirmar"
+                                                                >
+                                                                    <Check className="w-4 h-4" />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => setDeleteConfirmationId(null)} 
+                                                                    className="p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                                                                    title="Cancelar"
+                                                                >
+                                                                    <X className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <button 
+                                                                    onClick={() => handleEditClick(user)}
+                                                                    className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                                                                    title="Editar Usuário"
+                                                                >
+                                                                    <Pencil className="w-4 h-4" />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => setDeleteConfirmationId(user.id)}
+                                                                    className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                                                    title="Excluir Usuário"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </td>
                                         </tr>
